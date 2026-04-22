@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     [Header("Настройки спавна")]
     [SerializeField] private float spawnInterval = 2f;
     [SerializeField] private float gapSize = 2.5f;
-    [SerializeField] private float spawnOffsetX = 1.5f; 
+    [SerializeField] private float spawnOffsetX = 1.5f;
 
     [Header("Метеориты")]
     [SerializeField] private float meteoriteSpawnInterval = 3f;
@@ -33,10 +33,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float speedIncrement = 0.5f;
     private float currentGameSpeed;
 
-    [Header("Интерфейс (Временно пусто)")]
-    [SerializeField] private TextMeshProUGUI scoreText;
+    [Header("Интерфейс")]
+    [SerializeField] private GameObject hud;                
+    [SerializeField] private TextMeshProUGUI scoreText;     
+    [SerializeField] private GameObject startScreen;        
+
+    [Header("Game Over Screen")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TextMeshProUGUI finalScoreText;
+    [SerializeField] private TextMeshProUGUI highScoreText; 
 
     private float score = 0;
     private bool isGameActive = false;
@@ -59,6 +64,11 @@ public class GameManager : MonoBehaviour
         mainCam = Camera.main;
         if (mainCam == null) Debug.LogError("Main Camera not found!");
 
+        
+        if (hud != null) hud.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (startScreen != null) startScreen.SetActive(true);
+
         currentGameSpeed = baseGameSpeed;
         currentMeteoriteInterval = baseMeteoriteInterval;
         currentBonusInterval = bonusSpawnInterval;
@@ -67,9 +77,6 @@ public class GameManager : MonoBehaviour
         meteoriteTimer = meteoriteSpawnInterval;
         bonusTimer = bonusSpawnInterval;
     }
-
-  
-    
 
     void Update()
     {
@@ -80,10 +87,8 @@ public class GameManager : MonoBehaviour
         SpawnBonus();
     }
 
-    
     private float GetRightScreenEdge()
     {
-        
         return mainCam.orthographicSize * mainCam.aspect;
     }
 
@@ -91,22 +96,17 @@ public class GameManager : MonoBehaviour
     {
         float rightEdge = GetRightScreenEdge();
         float spawnX = rightEdge + spawnOffsetX;
-
-      
         float minY = -mainCam.orthographicSize + 1.5f;
         float maxY = mainCam.orthographicSize - 1.5f;
         float spawnY = Random.Range(minY, maxY);
-
         return new Vector2(spawnX, spawnY);
     }
 
     private Vector2 GetSafeSpawnPosition(float minY, float maxY)
     {
         int attempts = 0;
-        int maxAttempts = 10; 
+        int maxAttempts = 10;
         Vector2 spawnPos;
-
-        
         LayerMask obstacleLayer = LayerMask.GetMask("Obstacle");
 
         do
@@ -114,15 +114,8 @@ public class GameManager : MonoBehaviour
             float spawnX = GetRightScreenEdge() + spawnOffsetX;
             float spawnY = Random.Range(minY, maxY);
             spawnPos = new Vector2(spawnX, spawnY);
-
-        
             Collider2D hit = Physics2D.OverlapCircle(spawnPos, 0.5f, obstacleLayer);
-
-            if (hit == null)
-            {
-                return spawnPos; 
-            }
-
+            if (hit == null) return spawnPos;
             attempts++;
         } while (attempts < maxAttempts);
 
@@ -160,10 +153,8 @@ public class GameManager : MonoBehaviour
         if (meteoriteTimer <= 0)
         {
             Vector2 pos = GetSafeSpawnPosition(-mainCam.orthographicSize + 1f, mainCam.orthographicSize - 1f);
-
             GameObject meteorite = Instantiate(meteoritePrefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
             meteorite.GetComponent<Meteorite>().SetSpeed(currentGameSpeed);
-
             meteoriteTimer = currentMeteoriteInterval;
         }
     }
@@ -174,33 +165,36 @@ public class GameManager : MonoBehaviour
         if (bonusTimer <= 0)
         {
             Vector2 pos = GetSafeSpawnPosition(-mainCam.orthographicSize + 1f, mainCam.orthographicSize - 1f);
-
             GameObject bonus = Instantiate(bonusPrefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
             bonus.GetComponent<BonusController>().SetSpeed(currentGameSpeed);
-
             bonusTimer = currentBonusInterval;
         }
     }
+
     public void StartTheGame()
     {
         isGameStarted = true;
         isGameActive = true;
 
+        // Логика UI при старте
+        if (startScreen != null) startScreen.SetActive(false); 
+        if (hud != null) hud.SetActive(true);                  
+
         PlayerController player = FindObjectOfType<PlayerController>();
-        if (player != null)
-        {
-            player.StartPlaying();
-        }
-
-        Debug.Log("Game Started!");
+        if (player != null) player.StartPlaying();
     }
-
 
     public void AddScore()
     {
         if (!isGameActive) return;
         score++;
-        
+
+      
+        if (scoreText != null)
+        {
+            scoreText.text = ((int)score).ToString("000000");
+        }
+
         if ((int)score % 10 == 0 && score > 0) IncreaseDifficulty();
     }
 
@@ -214,16 +208,31 @@ public class GameManager : MonoBehaviour
     {
         if (!isGameActive) return;
         isGameActive = false;
+
         int currentScore = (int)score;
-        int highScore = PlayerPrefs.GetInt("HighScore", 0);
-        if (currentScore > highScore)
+        int bestScore = PlayerPrefs.GetInt("HighScore", 0);
+
+        if (currentScore > bestScore)
         {
-            PlayerPrefs.SetInt("HighScore", currentScore);
+            bestScore = currentScore;
+            PlayerPrefs.SetInt("HighScore", bestScore);
             PlayerPrefs.Save();
         }
-        
-        Invoke(nameof(ReloadScene), 2f);
+
+       
+        if (finalScoreText != null) finalScoreText.text = currentScore.ToString("000000");
+        if (highScoreText != null)
+        {
+            highScoreText.text = $"Best: {bestScore:000000}";
+        }
+
+        if (gameOverPanel != null) gameOverPanel.SetActive(true); 
+        if (hud != null) hud.SetActive(false);                   
     }
 
-    void ReloadScene() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }

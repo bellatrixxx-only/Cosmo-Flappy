@@ -14,6 +14,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool hasWeapon = false;
     [SerializeField] private float weaponDuration = 15f;
 
+    private float gunTimer = 0f;
+    private float gunDuration = 15;
+
+    [Header("Интерфейс")]
+    [SerializeField] private GameObject gunContainer;
+    [SerializeField] private UnityEngine.UI.Slider gunBar;
+
     private Rigidbody2D rb;
     private bool isDead = false;
     private float fireTimer;
@@ -47,7 +54,24 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        
+
+        if (hasWeapon)
+        {
+            gunTimer -= Time.deltaTime;
+
+           
+            if (gunBar != null)
+            {
+                gunBar.value = gunTimer / gunDuration;
+            }
+
+            if (gunTimer <= 0)
+            {
+                DeactivateWeapon();
+            }
+        }
+
+
         CheckScreenBoundaries();
     }
 
@@ -94,7 +118,15 @@ public class PlayerController : MonoBehaviour
     public void ActivateWeapon()
     {
         hasWeapon = true;
-        Invoke(nameof(DeactivateWeapon), weaponDuration);
+        gunTimer = gunDuration;
+
+        if (gunContainer != null) gunContainer.SetActive(true);
+        if (gunBar != null)
+        {
+            gunBar.value = 1f; 
+        }
+
+        CancelInvoke(nameof(DeactivateWeapon));
     }
 
     private void DeactivateWeapon()
