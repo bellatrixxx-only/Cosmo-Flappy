@@ -176,7 +176,7 @@ public class GameManager : MonoBehaviour
         isGameStarted = true;
         isGameActive = true;
 
-        // Логика UI при старте
+      
         if (startScreen != null) startScreen.SetActive(false); 
         if (hud != null) hud.SetActive(true);                  
 
@@ -209,25 +209,45 @@ public class GameManager : MonoBehaviour
         if (!isGameActive) return;
         isGameActive = false;
 
-        int currentScore = (int)score;
-        int bestScore = PlayerPrefs.GetInt("HighScore", 0);
-
-        if (currentScore > bestScore)
-        {
-            bestScore = currentScore;
-            PlayerPrefs.SetInt("HighScore", bestScore);
-            PlayerPrefs.Save();
-        }
-
        
-        if (finalScoreText != null) finalScoreText.text = currentScore.ToString("000000");
-        if (highScoreText != null)
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (player != null)
         {
-            highScoreText.text = $"Best: {bestScore:000000}";
+
+            if (player.rb != null)
+            {
+                player.rb.linearVelocity = Vector2.zero;
+            }
+
+
+            Destroy(player.gameObject);
         }
 
-        if (gameOverPanel != null) gameOverPanel.SetActive(true); 
-        if (hud != null) hud.SetActive(false);                   
+
+        ParallaxLayer[] backgrounds = FindObjectsOfType<ParallaxLayer>();
+        foreach (var bg in backgrounds)
+        {
+            bg.enabled = false;
+
+            enabled = false;
+
+
+            int currentScore = (int)score;
+            int bestScore = PlayerPrefs.GetInt("HighScore", 0);
+
+            if (currentScore > bestScore)
+            {
+                bestScore = currentScore;
+                PlayerPrefs.SetInt("HighScore", bestScore);
+                PlayerPrefs.Save();
+            }
+
+            if (finalScoreText != null) finalScoreText.text = $"Your Score: {currentScore:000000}";
+            if (highScoreText != null) highScoreText.text = $"Your Best: {bestScore:000000}";
+
+            if (gameOverPanel != null) gameOverPanel.SetActive(true);
+            if (hud != null) hud.SetActive(false);
+        }
     }
 
     

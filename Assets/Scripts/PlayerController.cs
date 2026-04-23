@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject gunContainer;
     [SerializeField] private UnityEngine.UI.Slider gunBar;
 
-    private Rigidbody2D rb;
+    public Rigidbody2D rb;
     private bool isDead = false;
     private float fireTimer;
 
@@ -37,13 +37,11 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && !GameManager.Instance.IsGameStarted) return;
         if (isDead) return;
 
-        // Управление
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
         {
             Flap();
         }
 
-        // Стрельба
         if (hasWeapon)
         {
             fireTimer -= Time.deltaTime;
