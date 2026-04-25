@@ -2,29 +2,33 @@ using UnityEngine;
 
 public class BonusController : MonoBehaviour
 {
-    private float speed = 3f; 
-
-    public void SetSpeed(float newSpeed)
-    {
-        speed = newSpeed;
-    }
-
+    [Header("Настройки")]
+    [SerializeField] private float speed = 3f;
+    [SerializeField] private float rotationSpeed = 160f; 
     void Update()
     {
-        transform.Translate(Vector3.left * speed * Time.deltaTime);
+        
+        transform.Translate(Vector3.left * speed * Time.deltaTime, Space.World);
 
-        if (transform.position.x < -12)
-        {
-            Destroy(gameObject);
-        }
+      
+        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.Self);
     }
 
-    void OnTriggerEnter2D(Collider2D collision)
+    public void SetSpeed(float gameSpeed)
     {
-        if (collision.CompareTag("Player"))
+        speed = gameSpeed;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
         {
-            PlayerController player = collision.GetComponent<PlayerController>();
-            if (player != null) player.ActivateWeapon();
+            PlayerController player = other.GetComponent<PlayerController>();
+            if (player != null)
+            {
+                player.ActivateWeapon();
+            }
+
             Destroy(gameObject);
         }
     }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7914572202396024219}
   - component: {fileID: 5355611067570478945}
   - component: {fileID: -3063841092096129615}
+  - component: {fileID: 6785722061888051482}
   m_Layer: 7
   m_Name: WeaponBonus
   m_TagString: Untagged
@@ -179,3 +180,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d819e5c809f88d240a1ea5dbf1eb5e0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BonusController
+--- !u!114 &6785722061888051482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9140722726371482468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1808870779dc8024d85098616a7f3128, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BonusVisualEffect
+  rotationSpeed: 150
+  bobAmplitude: 0.2
+  bobSpeed: 4

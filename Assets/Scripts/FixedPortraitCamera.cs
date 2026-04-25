@@ -22,10 +22,7 @@ public class FixedPortraitCamera : MonoBehaviour
 
     void Update()
     {
-        
-#if UNITY_EDITOR
         ApplyFixedAspect();
-#endif
     }
 
     void ApplyFixedAspect()

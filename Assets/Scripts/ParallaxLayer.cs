@@ -1,55 +1,85 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class ParallaxLayer : MonoBehaviour
 {
-    [Header("Настройки движения")]
-    [Tooltip("Базовая скорость движения слоя (пиксели в секунду). Отрицательное значение = движение влево.")]
-    public float scrollSpeed = -2f;
-
-    [Tooltip("Множитель скорости относительно общей скорости игры. 1.0 = стандарт, 0.5 = медленно (дальний план).")]
-    public float speedMultiplier = 1f;
-
-    private float spriteWidth;
-    private Vector3 startPosition;
-    private GameManager gameManager;
-    private float baseGameSpeed = 3f;
+    [SerializeField] private float scrollSpeed = -1.5f; 
+    private List<Transform> segments = new List<Transform>();
+    private float segmentWidth;
+    private float leftEdgeLimit;
+    private bool isInitialized = false;
 
     void Start()
     {
-        startPosition = transform.position;
-        gameManager = GameManager.Instance;
+        InitializePool();
+    }
 
-        
-        if (gameManager != null)
+    private void InitializePool()
+    {
+        if (transform.childCount == 0) return;
+        Transform template = transform.GetChild(0);
+        SpriteRenderer sr = template.GetComponent<SpriteRenderer>();
+        if (sr == null) return;
+
+        segmentWidth = sr.bounds.size.x;
+
+        if (Camera.main != null)
         {
-          
-            baseGameSpeed = 3f; 
+            float camHalfWidth = Camera.main.orthographicSize * Camera.main.aspect;
+            leftEdgeLimit = -camHalfWidth - segmentWidth;
         }
 
-       
-        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
-        if (renderers.Length > 0 && renderers[0].sprite != null)
+        float screenFullWidth = Camera.main ? Camera.main.orthographicSize * Camera.main.aspect * 2f : 20f;
+        int neededSegments = Mathf.CeilToInt(screenFullWidth / segmentWidth) + 2;
+
+        for (int i = 0; i < neededSegments; i++)
         {
-            spriteWidth = renderers[0].sprite.bounds.size.x;
+            Transform segment;
+            if (i == 0)
+            {
+                segment = template;
+            }
+            else
+            {
+                segment = Instantiate(template, transform);
+            }
+            Vector3 pos = segment.position;
+            pos.x = i * segmentWidth;
+            segment.position = pos;
+            segments.Add(segment);
         }
-        else
-        {
-            Debug.LogWarning("[ParallaxLayer] Спрайт не найден. Бесшовный цикл может работать некорректно.");
-        }
+        isInitialized = true;
     }
 
     void Update()
     {
-        float finalSpeed = scrollSpeed * speedMultiplier;
+        if (!isInitialized) return;
 
-        if (gameManager != null && gameManager.IsGameStarted)
+        float moveStep = scrollSpeed * Time.deltaTime;
+        foreach (var seg in segments)
         {
-            finalSpeed *= (baseGameSpeed / 3f);
+            seg.Translate(Vector3.right * moveStep, Space.World);
         }
-        transform.Translate(Vector3.right * finalSpeed * Time.deltaTime);
-              if (transform.position.x < startPosition.x - spriteWidth)
+
+        foreach (var seg in segments)
         {
-            transform.position = new Vector3(transform.position.x + spriteWidth, startPosition.y, startPosition.z);
+            if (seg.position.x + segmentWidth / 2f < leftEdgeLimit)
+            {
+                float rightmostX = float.MinValue;
+                foreach (var other in segments)
+                {
+                    if (other.position.x > rightmostX)
+                        rightmostX = other.position.x;
+                }
+                Vector3 newPos = seg.position;
+                newPos.x = rightmostX + segmentWidth;
+                seg.position = newPos;
+            }
         }
+    }
+
+    public void SetSpeed(float speed)
+    {
+        scrollSpeed = speed;
     }
 }
